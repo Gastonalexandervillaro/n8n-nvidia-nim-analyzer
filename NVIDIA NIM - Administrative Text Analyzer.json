@@ -1,0 +1,93 @@
+{
+  "name": "NVIDIA NIM - Administrative Text Analyzer",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b743df70-8fcb-4745-b6e6-dbaeb467f243",
+      "name": "Disparador Manual (Inicio del Flujo)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"nvidia/nemotron-3.5-lightning-30b-a3b\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Sos un asistente administrativo experto. Analizá el texto y devolvé un JSON con: resumen, urgencia (Alta/Media/Baja) y accion_requerida.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Estimados, solicitamos confirmación del presupuesto de licitación para la provisión de insumos antes de las 18hs.\"\n    }\n  ],\n  \"temperature\": 0.2\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "77daec49-dd56-497f-8c90-31d2b95e2870",
+      "name": "Consulta a IA NVIDIA (Modelo Nemotron)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parseamos la respuesta de texto que envió la IA de NVIDIA\nconst aiResponseText = $input.first().json.choices[0].message.content;\nconst parsedData = JSON.parse(aiResponseText);\n\nreturn [{\n  json: {\n    resumen: parsedData.resumen,\n    urgencia: parsedData.urgencia,\n    accion_requerida: parsedData.accion_requerida,\n    fecha_procesado: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        0
+      ],
+      "id": "7172c14e-9521-458c-99d5-4f7aae063834",
+      "name": "Estructurador y Limpiador JSON"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Disparador Manual (Inicio del Flujo)": {
+      "main": [
+        [
+          {
+            "node": "Consulta a IA NVIDIA (Modelo Nemotron)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consulta a IA NVIDIA (Modelo Nemotron)": {
+      "main": [
+        [
+          {
+            "node": "Estructurador y Limpiador JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7a99fa98-b82d-43d1-b89b-947f3746d6e7",
+  "meta": {
+    "instanceId": "e6f9f13b3003443137094ffe4f386121bc6dc391a68d9b19c7b00fa70c5e12d2"
+  },
+  "nodeGroups": [],
+  "id": "pXh2pX42dLV1NjV6",
+  "tags": []
+}
